@@ -2,6 +2,25 @@
 
 All notable changes to Distill are documented here.
 
+## [v0.9.0] - 2026-05-09
+
+### Added
+
+- **Multi-provider embedding support** — Ollama and Cohere alongside OpenAI; `--embedding-provider` flag on all commands (#83)
+- **Memory expiry and supersession** — `expire` and `supersede` endpoints; TTL via `expires_at`; `include_expired` on recall (#84)
+- **Sensitivity tagging** — pattern-based auto-classification for PII, credentials, and internal references; `max_sensitivity` in recall response (#85)
+- **Conflict detection on write** — semantically similar but non-duplicate entries flagged in store response (#88)
+- **Task-relevance ranking** — `boost_tags`, `task_context`, and `min_relevance` on recall (#89)
+- **MCP tools** — `memory_expire` and `memory_supersede`
+
+### Changed
+
+- README reframed around memory reliability (#86)
+
+### Fixed
+
+- Staticcheck QF1003 lint violation (#87)
+
 ## [v0.4.0] - 2026-02-24
 
 ### Added
