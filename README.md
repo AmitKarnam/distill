@@ -61,7 +61,7 @@ Query → Over-fetch (50) → Cluster → Select → MMR Re-rank (8) → LLM
 **Result:** Deterministic, diverse context. No LLM calls. Fully auditable.
 
 ### Architecture Diagram
-![alt text](docs\images\architecture-diagram.png)
+![Distill architecture diagram](docs/images/architecture-diagram.png)
 
 
 ## Installation
