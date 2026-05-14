@@ -191,3 +191,52 @@ func (ps *PostgresStore) Store(ctx context.Context, req StoreRequest) (*StoreRes
  
 	return result, nil
 }
+
+type pgSimilarEntry struct {
+	id       string
+	text     string
+	distance float64
+	isDup    bool
+}
+ 
+// findSimilar performs a full-scan cosine distance search.
+// The comment in the SQLite implementation applies equally here
+// for < 10K rows; at larger scale consider pgvector or a separate ANN index.
+func (s *PostgresStore) findSimilar(ctx context.Context, embedding []float32) ([]pgSimilarEntry, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, text, embedding FROM memories WHERE embedding IS NOT NULL AND expired = FALSE`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+ 
+	conflictThreshold := s.cfg.ConflictThreshold
+	if conflictThreshold <= 0 {
+		conflictThreshold = 0.35
+	}
+ 
+	var results []pgSimilarEntry
+	for rows.Next() {
+		var id, text string
+		var embBlob []byte
+		if err := rows.Scan(&id, &text, &embBlob); err != nil {
+			return nil, err
+		}
+ 
+		existing := decodeEmbedding(embBlob)
+		if len(existing) == 0 {
+			continue
+		}
+ 
+		dist := distillmath.CosineDistance(embedding, existing)
+		if dist < s.cfg.DedupThreshold {
+			return []pgSimilarEntry{{id: id, text: text, distance: dist, isDup: true}}, nil
+		}
+		if dist < conflictThreshold {
+			results = append(results, pgSimilarEntry{id: id, text: text, distance: dist})
+		}
+	}
+ 
+	return results, rows.Err()
+}
